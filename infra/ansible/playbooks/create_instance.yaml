@@ -3,8 +3,8 @@
   tasks:
     - name: Start an instance
       gcp_compute_instance:
-        name: jenkins-instance
-        machine_type: e2-standard-2
+        name: jenkins-instance-v2
+        machine_type: e2-standard-4
         # Refer to https://cloud.google.com/compute/docs/images/os-details#ubuntu_lts
         # or use the command `gcloud compute images list --project=ubuntu-os-cloud`
         zone: us-west4-c
