@@ -1,15 +1,24 @@
 """
-5: FastAPI for Diabetes Prediction Model Serving
+5: FastAPI for Diabetes Prediction Model Serving with OpenTelemetry Metrics
 """
 
 import os
 import sys
 import joblib
 import pandas as pd
+from time import time
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
+
+# OpenTelemetry imports
+from opentelemetry import metrics
+from opentelemetry.exporter.prometheus import PrometheusMetricReader
+from opentelemetry.metrics import set_meter_provider
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+from prometheus_client import start_http_server
 
 # Add parent to path for imports (works in both local and Docker)
 sys.path.insert(0, str(Path(__file__).parent))
@@ -27,6 +36,51 @@ except ImportError:
 # Default path for local development, can be overridden by env var
 DEFAULT_MODEL_PATH = Path(__file__).parent.parent.parent / "results/4_best_model/best_model.joblib"
 MODEL_PATH = Path(os.getenv("MODEL_PATH", str(DEFAULT_MODEL_PATH)))
+METRICS_PORT = int(os.getenv("METRICS_PORT", "8099"))
+
+# =============================================================================
+# OpenTelemetry Metrics Setup
+# =============================================================================
+# Start Prometheus metrics server
+start_http_server(port=METRICS_PORT, addr="0.0.0.0")
+
+# Create resource with service name
+resource = Resource(attributes={SERVICE_NAME: "diabetes-prediction-api"})
+
+# Create Prometheus metric reader
+reader = PrometheusMetricReader()
+
+# Create meter provider
+provider = MeterProvider(resource=resource, metric_readers=[reader])
+set_meter_provider(provider)
+
+# Create meter
+meter = metrics.get_meter("diabetes_prediction", "1.0.0")
+
+# Create metrics
+request_counter = meter.create_counter(
+    name="diabetes_prediction_requests_total",
+    description="Total number of prediction requests",
+    unit="1"
+)
+
+prediction_histogram = meter.create_histogram(
+    name="diabetes_prediction_latency_seconds",
+    description="Prediction request latency",
+    unit="seconds"
+)
+
+diabetes_positive_counter = meter.create_counter(
+    name="diabetes_positive_predictions_total",
+    description="Total number of positive diabetes predictions",
+    unit="1"
+)
+
+batch_size_histogram = meter.create_histogram(
+    name="diabetes_prediction_batch_size",
+    description="Batch prediction request sizes",
+    unit="1"
+)
 
 # =============================================================================
 # Pydantic Models
@@ -122,6 +176,9 @@ async def get_model_info():
 @app.post("/predict", response_model=PredictionResponse, tags=["Prediction"])
 async def predict(patient: PatientData):
     """Predict diabetes risk for a single patient."""
+    start_time = time()
+    labels = {"endpoint": "/predict", "method": "POST"}
+    
     try:
         # Convert to DataFrame
         df = pd.DataFrame([patient.model_dump()])
@@ -142,6 +199,15 @@ async def predict(patient: PatientData):
         pred = model_data["model"].predict(X)[0]
         prob = model_data["model"].predict_proba(X)[0][1]
         
+        # Record metrics
+        request_counter.add(1, labels)
+        if pred == 1:
+            diabetes_positive_counter.add(1, labels)
+        
+        # Record latency
+        elapsed_time = time() - start_time
+        prediction_histogram.record(elapsed_time, labels)
+        
         return PredictionResponse(
             prediction=int(pred),
             probability=round(float(prob), 4),
@@ -153,6 +219,9 @@ async def predict(patient: PatientData):
 @app.post("/predict/batch", response_model=BatchPredictionResponse, tags=["Prediction"])
 async def predict_batch(request: BatchPredictionRequest):
     """Predict diabetes risk for multiple patients."""
+    start_time = time()
+    labels = {"endpoint": "/predict/batch", "method": "POST"}
+    
     try:
         # Convert to DataFrame
         df = pd.DataFrame([p.model_dump() for p in request.patients])
@@ -181,6 +250,18 @@ async def predict_batch(request: BatchPredictionRequest):
             )
             for p, prob in zip(preds, probs)
         ]
+        
+        # Record metrics
+        batch_count = len(request.patients)
+        request_counter.add(1, labels)
+        batch_size_histogram.record(batch_count, labels)
+        positive_count = sum(1 for p in preds if p == 1)
+        if positive_count > 0:
+            diabetes_positive_counter.add(positive_count, labels)
+        
+        # Record latency
+        elapsed_time = time() - start_time
+        prediction_histogram.record(elapsed_time, labels)
         
         return BatchPredictionResponse(predictions=results, count=len(results))
     except Exception as e:

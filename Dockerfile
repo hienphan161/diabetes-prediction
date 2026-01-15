@@ -16,8 +16,10 @@ COPY ./src/utils.py /app/utils.py
 
 # Set environment variables
 ENV MODEL_PATH=/app/models/best_model.joblib
+ENV METRICS_PORT=8099
 
 EXPOSE 30000
+EXPOSE 8099
 
 # Disable pip cache to shrink the image size a little bit
 RUN pip install -r requirements.txt --no-cache-dir
