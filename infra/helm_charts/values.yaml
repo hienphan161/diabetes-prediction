@@ -1,0 +1,4 @@
+image:
+  repository: hienphantt161/diabetes-prediction
+  tag: "lts"
+  pullPolicy: Always

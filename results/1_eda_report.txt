@@ -1,0 +1,66 @@
+
+================================================================================
+                    DIABETES PREDICTION - BASIC EDA REPORT
+================================================================================
+
+1. DATASET OVERVIEW
+-------------------
+- Total Records: 100,000
+- Total Features: 8 (excluding target)
+- Target Variable: diabetes (binary: 0/1)
+
+2. FEATURES
+-----------
+Numerical (4):
+  - age: 0 to 80 years (diabetes more common in older adults)
+  - bmi: 10.01 to 95.69 (higher BMI = higher diabetes risk)
+  - HbA1c_level: 3.5 to 9.0 (>6.5% indicates diabetes)
+  - blood_glucose_level: 80 to 300
+
+Binary (2):
+  - hypertension: 7,485 cases (7.49%)
+  - heart_disease: 3,942 cases (3.94%)
+
+Categorical (2):
+  - gender: 3 unique values (Male, Female, Other)
+  - smoking_history: 6 categories (never, current, former, ever, not current, No Info)
+
+3. BMI CATEGORIES (Medical Thresholds)
+--------------------------------------
+  - Underweight (<18.5): 8,521
+  - Normal (18.5-24.9): 21,831
+  - Overweight (25-29.9): 45,767
+  - Obese (>=30): 23,881
+
+4. HbA1c LEVEL (Diabetes Indicator)
+-----------------------------------
+  - Normal (<=6.5%): 87,565 (87.56%)
+  - High (>6.5%): 12,435 (12.44%)
+
+5. DATA QUALITY
+---------------
+- Missing Values: 0
+- 'No Info' in smoking_history: 35,816 (35.82%)
+
+6. TARGET DISTRIBUTION
+----------------------
+- No Diabetes (0): 91,500 (91.50%)
+- Diabetes (1): 8,500 (8.50%)
+- Class Imbalance Ratio: 10.76:1
+
+7. KEY CORRELATIONS WITH DIABETES
+---------------------------------
+blood_glucose_level    0.419558
+HbA1c_level            0.400660
+age                    0.258008
+bmi                    0.214357
+hypertension           0.197823
+heart_disease          0.171727
+
+================================================================================
+Generated Plots:
+- 1_categorical_distributions.png
+- 1_numerical_distributions.png
+- 1_correlation_heatmap.png
+- 1_diabetes_rate_by_category.png (includes BMI category & HbA1c threshold)
+================================================================================

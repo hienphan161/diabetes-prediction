@@ -1,0 +1,13 @@
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gender": "Female",
+    "age": 45.0,
+    "hypertension": 0,
+    "heart_disease": 0,
+    "smoking_history": "never",
+    "bmi": 27.5,
+    "HbA1c_level": 6.2,
+    "blood_glucose_level": 140
+  }'
+# Response: {"prediction":0,"probability":0.0372,"risk_level":"Low"}

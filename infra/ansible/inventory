@@ -1,0 +1,2 @@
+[servers]
+34.125.4.54 ansible_user=hien.phantt161 ansible_ssh_private_key_file=diabetes-prediction/secrets/id_rsa

@@ -1,0 +1,31 @@
+
+======================================================================
+MODEL TRAINING REPORT
+======================================================================
+
+Data: 80,000 train, 20,000 test, 27 features
+Preprocessors: none, standard, minmax, robust, maxabs, power_yj, log_standard, log_minmax
+Models: 12
+
+              Model Preprocessor  Accuracy  Precision   Recall       F1  ROC-AUC
+            xgboost         none   0.97230   0.978297 0.689412 0.808834 0.979465
+           lightgbm         none   0.97225   0.979079 0.688235 0.808290 0.979487
+  gradient_boosting         none   0.97185   0.970223 0.690000 0.806463 0.979342
+                mlp       robust   0.97195   0.977368 0.685882 0.806084 0.976516
+      random_forest         none   0.97220   0.990566 0.679412 0.806001 0.973731
+      decision_tree         none   0.97230   1.000000 0.674118 0.805341 0.959380
+           adaboost         none   0.97230   1.000000 0.674118 0.805341 0.976692
+        extra_trees         none   0.97075   0.944932 0.696471 0.801896 0.971436
+                svm       robust   0.97085   0.981051 0.670000 0.796225 0.933455
+logistic_regression       robust   0.96275   0.885391 0.645294 0.746512 0.963201
+                knn   log_minmax   0.95680   0.829134 0.619412 0.709091 0.925343
+        naive_bayes       robust   0.83515   0.324312 0.867059 0.472058 0.922886
+
+Best Model: xgboost
+  Preprocessor: none
+  Parameters: {'learning_rate': 0.1, 'max_depth': 5, 'n_estimators': 100, 'scale_pos_weight': 1}
+  CV F1: 0.8056
+  Test Metrics: {'accuracy': 0.9723, 'precision': 0.9782971619365609, 'recall': 0.6894117647058824, 'f1': 0.8088336783988958, 'roc_auc': 0.9794649791063965}
+  MLflow Run: f7446abdc6da4f9b8f899d2ec82b8118
+
+======================================================================

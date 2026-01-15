@@ -1,0 +1,86 @@
+# Python
+__pycache__/
+*/__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# MLflow
+results/mlruns/
+
+# Model checkpoints (large files)
+# results/4_checkpoints/
+# results/4_best_model/
+
+# Secrets and credentials
+secrets/
+*.pem
+*.key
+*.json
+!infra/**/*.json
+
+# Terraform
+infra/terraform/.terraform/
+infra/terraform/.terraform.lock.hcl
+infra/terraform/terraform.tfstate
+infra/terraform/terraform.tfstate.backup
+infra/terraform/*.tfvars
+
+# Docker
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (optional - uncomment if data is large)
+# data/*.csv
+
+# Environment variables
+.env
+.env.local
+*.env

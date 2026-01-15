@@ -1,0 +1,48 @@
+
+================================================================================
+                    FEATURE ENGINEERING - REFERENCE
+================================================================================
+
+ORIGINAL FEATURES (kept):
+- age: Patient age (0-80)
+- bmi: Body Mass Index
+- HbA1c_level: Glycated hemoglobin level
+- blood_glucose_level: Blood glucose level
+- hypertension: 0/1
+- heart_disease: 0/1
+
+ENGINEERED FEATURES:
+
+1. Age-based:
+   - age_group: 0=0-20, 1=21-40, 2=41-60, 3=61-80, 4=80+
+   - age_squared: age^2 (non-linear relationship)
+
+2. BMI-based:
+   - bmi_category: 0=Underweight, 1=Normal, 2=Overweight, 3=Obese
+   - bmi_squared: bmi^2 (non-linear relationship)
+
+3. Clinical Thresholds:
+   - hba1c_high: 1 if HbA1c > 6.5% (diabetes indicator)
+   - glucose_high: 1 if blood_glucose >= 200
+
+4. Comorbidity:
+   - comorbidity_score: hypertension + heart_disease (0-2)
+   - has_comorbidity: 1 if any comorbidity present
+
+5. Interactions:
+   - age_bmi_interaction: age * bmi
+   - age_hba1c_interaction: age * HbA1c_level
+   - bmi_glucose_interaction: bmi * blood_glucose_level
+
+6. Risk Score:
+   - risk_score: Composite score based on multiple risk factors
+
+ENCODED FEATURES:
+- gender_Female, gender_Male, gender_Other
+- smoking_No Info, smoking_current, smoking_ever, smoking_former, 
+  smoking_never, smoking_not current
+
+TARGET: diabetes (0/1)
+
+Total Features: 27 (excluding target)
+================================================================================

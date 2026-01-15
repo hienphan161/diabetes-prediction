@@ -1,0 +1,65 @@
+
+================================================================================
+                 DIABETES PREDICTION - ADVANCED EDA REPORT
+================================================================================
+
+1. STATISTICAL SIGNIFICANCE
+---------------------------
+Chi-Square Tests (Categorical Features):
+        Feature        Chi2      p-value  Significant
+         gender  143.218251 7.953384e-32         True
+smoking_history 1956.094420 0.000000e+00         True
+   hypertension 3910.708547 0.000000e+00         True
+  heart_disease 2945.847522 0.000000e+00         True
+
+T-Tests (Numerical Features):
+            Feature      t-stat  p-value  Effect Size
+                age  -84.447652      0.0     0.925148
+                bmi  -69.398227      0.0     0.768628
+        HbA1c_level -138.283084      0.0     1.436660
+blood_glucose_level -146.161056      0.0     1.504423
+
+2. OUTLIER SUMMARY
+------------------
+            Feature  Outliers  Percentage
+                age         0       0.000
+                bmi      7086       7.086
+        HbA1c_level      1315       1.315
+blood_glucose_level      2038       2.038
+
+3. DIABETES RATE BY AGE GROUP
+-----------------------------
+            Rate (%)  Count
+age_group                  
+0-20        0.540566  20904
+21-40       2.572397  25968
+41-60      10.170871  29496
+61-80      19.968687  23632
+
+4. DIABETES RATE BY BMI GROUP
+-----------------------------
+              Rate (%)  Count
+bmi_group                    
+Underweight   0.751086   8521
+Normal        3.889462  22291
+Overweight    7.301171  45705
+Obese        18.021548  23483
+
+5. DIABETES RATE BY HYPERTENSION x HEART DISEASE
+------------------------------------------------
+                             Rate (%)  Count
+hypertension heart_disease                  
+0            0               6.149359  89489
+             1              30.039656   3026
+1            0              26.335820   6569
+             1              39.082969    916
+
+================================================================================
+Generated Plots:
+- 2_distribution_by_diabetes.png
+- 2_boxplots_by_diabetes.png
+- 2_diabetes_heatmap_age_bmi.png
+- 2_pairplot.png
+- 2_violin_plots.png
+- 2_feature_correlation.png
+================================================================================

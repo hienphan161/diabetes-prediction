@@ -1,0 +1,195 @@
+"""
+5: FastAPI for Diabetes Prediction Model Serving
+"""
+
+import os
+import sys
+import joblib
+import pandas as pd
+from pathlib import Path
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
+from contextlib import asynccontextmanager
+
+# Add parent to path for imports (works in both local and Docker)
+sys.path.insert(0, str(Path(__file__).parent))
+try:
+    from utils import engineer_features, get_risk_level
+except ImportError:
+    # Fallback for local development
+    ROOT_DIR = Path(__file__).parent.parent.parent
+    sys.path.insert(0, str(ROOT_DIR / "src"))
+    from utils import engineer_features, get_risk_level
+
+# =============================================================================
+# Configuration
+# =============================================================================
+# Default path for local development, can be overridden by env var
+DEFAULT_MODEL_PATH = Path(__file__).parent.parent.parent / "results/4_best_model/best_model.joblib"
+MODEL_PATH = Path(os.getenv("MODEL_PATH", str(DEFAULT_MODEL_PATH)))
+
+# =============================================================================
+# Pydantic Models
+# =============================================================================
+class PatientData(BaseModel):
+    """Input schema for a single patient."""
+    gender: str = Field(..., description="Gender: Male, Female, or Other")
+    age: float = Field(..., ge=0, le=100, description="Age in years")
+    hypertension: int = Field(..., ge=0, le=1, description="0=No, 1=Yes")
+    heart_disease: int = Field(..., ge=0, le=1, description="0=No, 1=Yes")
+    smoking_history: str = Field(..., description="never, current, former, ever, not current, No Info")
+    bmi: float = Field(..., ge=10, le=100, description="Body Mass Index")
+    HbA1c_level: float = Field(..., ge=3, le=15, description="HbA1c level")
+    blood_glucose_level: int = Field(..., ge=50, le=400, description="Blood glucose level")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "gender": "Female",
+                "age": 45.0,
+                "hypertension": 0,
+                "heart_disease": 0,
+                "smoking_history": "never",
+                "bmi": 27.5,
+                "HbA1c_level": 6.2,
+                "blood_glucose_level": 140
+            }
+        }
+
+class PredictionResponse(BaseModel):
+    """Output schema for prediction."""
+    prediction: int = Field(..., description="0=No Diabetes, 1=Diabetes")
+    probability: float = Field(..., description="Probability of diabetes")
+    risk_level: str = Field(..., description="Low, Medium, or High risk")
+
+class BatchPredictionRequest(BaseModel):
+    """Input schema for batch predictions."""
+    patients: list[PatientData]
+
+class BatchPredictionResponse(BaseModel):
+    """Output schema for batch predictions."""
+    predictions: list[PredictionResponse]
+    count: int
+
+class ModelInfo(BaseModel):
+    """Model metadata."""
+    model_name: str
+    preprocessor: str
+    metrics: dict
+    features: list[str]
+
+# =============================================================================
+# Model Loading
+# =============================================================================
+model_data = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Load model on startup."""
+    global model_data
+    if not MODEL_PATH.exists():
+        raise RuntimeError(f"Model not found: {MODEL_PATH}")
+    model_data = joblib.load(MODEL_PATH)
+    print(f"Loaded model: {model_data['model_name']} with {model_data['prep_name']} preprocessor")
+    yield
+    model_data = None
+
+# =============================================================================
+# FastAPI App
+# =============================================================================
+app = FastAPI(
+    title="Diabetes Prediction API",
+    description="API for predicting diabetes risk based on patient health data",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+@app.get("/", tags=["Health"])
+async def root():
+    """Health check endpoint."""
+    return {"status": "healthy", "message": "Diabetes Prediction API"}
+
+@app.get("/model/info", response_model=ModelInfo, tags=["Model"])
+async def get_model_info():
+    """Get information about the loaded model."""
+    return ModelInfo(
+        model_name=model_data["model_name"],
+        preprocessor=model_data["prep_name"],
+        metrics=model_data["metrics"],
+        features=model_data["features"]
+    )
+
+@app.post("/predict", response_model=PredictionResponse, tags=["Prediction"])
+async def predict(patient: PatientData):
+    """Predict diabetes risk for a single patient."""
+    try:
+        # Convert to DataFrame
+        df = pd.DataFrame([patient.model_dump()])
+        
+        # Engineer features
+        df = engineer_features(df)
+        
+        # Ensure column order matches training
+        df = df[model_data["features"]]
+        
+        # Apply preprocessor if exists
+        if model_data["prep"] is not None:
+            X = model_data["prep"].transform(df)
+        else:
+            X = df.values
+        
+        # Predict
+        pred = model_data["model"].predict(X)[0]
+        prob = model_data["model"].predict_proba(X)[0][1]
+        
+        return PredictionResponse(
+            prediction=int(pred),
+            probability=round(float(prob), 4),
+            risk_level=get_risk_level(prob)
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/predict/batch", response_model=BatchPredictionResponse, tags=["Prediction"])
+async def predict_batch(request: BatchPredictionRequest):
+    """Predict diabetes risk for multiple patients."""
+    try:
+        # Convert to DataFrame
+        df = pd.DataFrame([p.model_dump() for p in request.patients])
+        
+        # Engineer features
+        df = engineer_features(df)
+        
+        # Ensure column order
+        df = df[model_data["features"]]
+        
+        # Apply preprocessor
+        if model_data["prep"] is not None:
+            X = model_data["prep"].transform(df)
+        else:
+            X = df.values
+        
+        # Predict
+        preds = model_data["model"].predict(X)
+        probs = model_data["model"].predict_proba(X)[:, 1]
+        
+        results = [
+            PredictionResponse(
+                prediction=int(p),
+                probability=round(float(prob), 4),
+                risk_level=get_risk_level(prob)
+            )
+            for p, prob in zip(preds, probs)
+        ]
+        
+        return BatchPredictionResponse(predictions=results, count=len(results))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# =============================================================================
+# Run Server
+# =============================================================================
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
