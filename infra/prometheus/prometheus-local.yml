@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'diabetes-prediction-api'
+    static_configs:
+      # Use 'host.docker.internal:8099' if API runs in Docker
+      # Use 'localhost:8099' if API runs locally (not in Docker)
+      - targets: ['localhost:8099']
+        labels:
+          service: 'diabetes-prediction-api'
+          environment: 'local'
