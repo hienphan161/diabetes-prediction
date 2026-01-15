@@ -86,18 +86,35 @@ pytest tests/ -v
 # Build
 docker build -t diabetes-prediction-api .
 
-# Run
-docker run -p 30000:30000 diabetes-prediction-api
+# Run (API on 30000, Prometheus metrics on 8099)
+docker run -p 30000:30000 -p 8099:8099 diabetes-prediction-api
 ```
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | Health check |
-| GET | `/model/info` | Model metadata |
-| POST | `/predict` | Single prediction |
-| POST | `/predict/batch` | Batch predictions |
+| Method | Endpoint | Port | Description |
+|--------|----------|------|-------------|
+| GET | `/` | 30000 | Health check |
+| GET | `/model/info` | 30000 | Model metadata |
+| POST | `/predict` | 30000 | Single prediction |
+| POST | `/predict/batch` | 30000 | Batch predictions |
+| GET | `/metrics` | 8099 | Prometheus metrics |
+
+## Metrics (OpenTelemetry)
+
+The API exposes Prometheus metrics on port `8099`:
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `diabetes_prediction_requests_total` | Counter | Total prediction requests |
+| `diabetes_prediction_latency_seconds` | Histogram | Request latency |
+| `diabetes_positive_predictions_total` | Counter | Positive diabetes predictions |
+| `diabetes_prediction_batch_size` | Histogram | Batch request sizes |
+
+```bash
+# View metrics
+curl http://localhost:8099/metrics
+```
 
 ### Example Request
 

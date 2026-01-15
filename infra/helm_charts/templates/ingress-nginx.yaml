@@ -39,6 +39,13 @@ spec:
             name: {{ .Release.Name }}
             port:
               number: 30000
+      - path: /predict/batch
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}
+            port:
+              number: 30000
       - path: /model/info
         pathType: Prefix
         backend:
@@ -46,3 +53,10 @@ spec:
             name: {{ .Release.Name }}
             port:
               number: 30000
+      - path: /metrics
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}
+            port:
+              number: 8099
